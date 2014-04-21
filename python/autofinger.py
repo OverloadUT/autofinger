@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*-coding: utf8 -*-
 
-import github
-import json
 from time import sleep
 import serial
 from random import randint
@@ -73,15 +71,11 @@ def main():
                 arduino.send(command)
             sleep(1.2)
 
-    gh = github.GitHub()
-
     last_saved_commit = None
 
     while True:
-        commits = gh.repos('OverloadUT')('IGC2CSV').commits.get()
-        print json.dumps(commits, indent=4, sort_keys=True)
         #TODO: get latest commit
-        last_commit = commits[0]
+        last_commit = None
 
         if last_commit.sha != last_saved_commit:
             last_saved_commit = last_commit.sha
