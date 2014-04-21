@@ -95,7 +95,7 @@ def main():
 
         sleep(5)
 
-def send_commands(commit, ser):
+def send_commands(commit, arduino):
     seat_coords = [90,90]
     try:
         seat_coords = seats[devs[commit.author.login]]
@@ -107,13 +107,9 @@ def send_commands(commit, ser):
     commands = []
     # Servo command
     commands.append("movsrvos{0:03d}{1:03d}".format(seat_coords[0], seat_coords[1]).ljust(32))
-    # LED command
-    #commands.append("movsrvos{0:03d}{1:03d}".format(seat_coords[0], seat_coords[1]).ljust(32))
 
     for command in commands:
-        print "Command: *{}*".format(command)
-        bytecommand = list(bytearray(command))
-        ser.write(bytecommand)
+        arduino.send(command)
 
 if __name__ == '__main__':
     main()
