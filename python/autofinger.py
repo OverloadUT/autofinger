@@ -38,7 +38,7 @@ devs = {
 }
 
 def main():
-    ser = serial.Serial('/dev/tty.usbserial-A5025Y07', 9600)
+    ser = serial.Serial('/dev/ttyUSB0', 9600)
 
     seats_sorted = sorted(seats, key=lambda key: key)
 
@@ -48,10 +48,10 @@ def main():
             print seatkey
             commands = []
             # Servo command
-            commands.append("movsrvos{0:03d}{1:03d}".format(seats[seatkey][0], seats[seatkey][1]))
+            commands.append("allinone{0:03d}{1:03d}{2}".format(seats[seatkey][0], seats[seatkey][1], colors[randint(0,5)]));
             # LED command
             #commands.append("stledcol{0:03d}{1:03d}{2:03d}".format(randint(1,2)*128,randint(1,2)*128,randint(1,2)*128))
-            commands.append("stledcol{}".format(colors[randint(0,5)]))
+            #commands.append("stledcol{}".format(colors[randint(0,5)]))
 
             for command in commands:
                 print "Command: *{}*".format(command)
