@@ -1,8 +1,12 @@
+#!/usr/bin/env python
+# -*-coding: utf8 -*-
+
 import github
 import json
 from time import sleep
 import serial
 from random import randint
+from bs4 import BeautifulSoup
 
 seats = {
     'seat-1-1': [30, 5],
@@ -37,27 +41,36 @@ devs = {
     'OverloadUT': 'seat-1-1',
 }
 
+class Arduino:
+    ser = None
+    def __init__(self, port):
+        try:
+            self.ser = serial.Serial(port, 9600)
+        except OSError:
+            print "****   ERROR OPENING ARDUINO PORT   ****"
+            print "**** Continuing in SIMULATION MODE  ****"
+
+    def send(self, command):
+        print "Sending command to Arduino: \"{}\"".format(command)
+        if self.ser == None:
+            print "Simulation mode - Command not sent"
+        else:
+            bytecommand = list(bytearray(command))
+            self.ser.write(bytecommand)
+
 def main():
-    ser = serial.Serial('/dev/ttyUSB0', 9600)
+    arduino = Arduino('/dev/ttyUSB0')
 
     seats_sorted = sorted(seats, key=lambda key: key)
 
     while True:
-
         for seatkey in seats_sorted:
             print seatkey
             commands = []
-            # Servo command
             commands.append("allinone{0:03d}{1:03d}{2}".format(seats[seatkey][0], seats[seatkey][1], colors[randint(0,5)]));
-            # LED command
-            #commands.append("stledcol{0:03d}{1:03d}{2:03d}".format(randint(1,2)*128,randint(1,2)*128,randint(1,2)*128))
-            #commands.append("stledcol{}".format(colors[randint(0,5)]))
 
             for command in commands:
-                print "Command: *{}*".format(command)
-                bytecommand = list(bytearray(command))
-                ser.write(bytecommand)
-                #sleep(1.5)
+                arduino.send(command)
             sleep(1.2)
 
     gh = github.GitHub()
