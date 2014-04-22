@@ -25,7 +25,9 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print "Aborted by user. Resetting finger to center position..."
+        print "Aborted by user."
+    finally:
+        print "Resetting finger to center position..."
         sleep(2)
         arduino.returntocenter()
         print "Bye!"
