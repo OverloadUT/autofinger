@@ -4,7 +4,7 @@
 from time import sleep
 import serial
 from bs4 import BeautifulSoup
-import urllib
+import urllib2
 import sys
 import datetime
 
@@ -120,7 +120,7 @@ def main():
             newest_commit = last_saved_commit
             for repo in repos:
                 try:
-                    f = urllib.urlopen(repo[2])
+                    f = urllib2.urlopen(repo[2],None,5)
                     soup = BeautifulSoup(f.read())
                 except IOError:
                     print "ERROR reaching server \"{}\". Will try again later.".format(repo[2])
