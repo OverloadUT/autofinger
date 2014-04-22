@@ -62,18 +62,6 @@ class Arduino:
             self.ser.write(bytecommand)
 
 def main():
-
-    seats_sorted = sorted(seats, key=lambda key: key)
-
-    while True:
-        for seatkey in seats_sorted:
-            print seatkey
-            commands = []
-            commands.append("allinone{0:03d}{1:03d}{2}".format(seats[seatkey][0], seats[seatkey][1], colors[randint(0,5)]));
-
-            for command in commands:
-                arduino.send(command)
-            sleep(1.2)
     arduino = Arduino()
 
     last_saved_commit = None
@@ -82,7 +70,7 @@ def main():
         #TODO: get latest commit
         last_commit = None
 
-        if last_commit.sha != last_saved_commit:
+        if last_commit != None and last_commit.sha != last_saved_commit:
             last_saved_commit = last_commit.sha
             # We have a new commit!
             print "New commit by {}: {}".format(last_commit.author.login, last_saved_commit)
@@ -111,4 +99,8 @@ def send_commands(commit, arduino):
         arduino.send(command)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Aborted by user. Bye!"
+        exit()
