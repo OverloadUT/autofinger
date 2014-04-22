@@ -45,6 +45,7 @@ class Arduino:
         try:
             with open('arduino.conf', 'r') as f:
                 port = f.readline()
+                print "Arduino port: \"{}\"".format(port)
             self.ser = serial.Serial(port, 9600)
         except IOError:
             print "****  arduino.conf does not exist  ****"
