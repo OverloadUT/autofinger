@@ -57,7 +57,7 @@ class Devs:
         return (dev in self.devseats)
 
     def has_seat(self, dev):
-        if self.is_defined(dev) and self.get_seat_name != 'ignore':
+        if self.is_defined(dev) and self.get_seat_name(dev) != 'ignore':
             return True
         else:
             return False
