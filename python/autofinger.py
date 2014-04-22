@@ -44,7 +44,7 @@ class Arduino:
     def __init__(self):
         try:
             with open('arduino.conf', 'r') as f:
-                port = f.readline()
+                port = f.readline().rstrip()
                 print "Arduino port: \"{}\"".format(port)
             self.ser = serial.Serial(port, 9600)
         except IOError:
