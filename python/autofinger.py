@@ -128,7 +128,9 @@ def main():
                     commit_soup_tags = soup.find_all('item')
                     # Datetime format example: Mon, 21 Apr 2014 23:39:17 +0000
                     # strptime doesn't work with the timezone number, so we strip it out below
-                    for commit_soup_tag in commit_soup_tags:
+                    for idx, commit_soup_tag in enumerate(commit_soup_tags):
+                        if idx > 3:
+                            break;
                         commit = {}
                         commit['datetime'] = datetime.datetime.strptime(commit_soup_tag.find_next('pubdate').string[:-6], '%a, %d %b %Y %H:%M:%S')
                         commit['author'] = commit_soup_tag.find_next('author').string.split('<')[0].rstrip()
@@ -136,6 +138,7 @@ def main():
                         commit['color'] = repo[1]
                         if devs.has_seat(commit['author']) and (newest_commit == None or commit['datetime'] > newest_commit['datetime']):
                             newest_commit = commit
+                    sleep(1)
 
             if newest_commit != None and (last_saved_commit == None or last_saved_commit['datetime'] < newest_commit['datetime']):
                 last_saved_commit = newest_commit
