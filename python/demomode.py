@@ -5,7 +5,7 @@ from random import randint
 from time import sleep
 
 def main():
-    arduino = Arduino()
+    global arduino
 
     seats_sorted = sorted(seats, key=lambda key: key)
     while True:
@@ -20,8 +20,13 @@ def main():
 
 
 if __name__ == '__main__':
+    arduino = Arduino()
+
     try:
         main()
     except KeyboardInterrupt:
-        print "Aborted by user. Bye!"
+        print "Aborted by user. Resetting finger to center position..."
+        sleep(2)
+        arduino.returntocenter()
+        print "Bye!"
         exit()

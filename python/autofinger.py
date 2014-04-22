@@ -62,8 +62,11 @@ class Arduino:
             bytecommand = list(bytearray(command))
             self.ser.write(bytecommand)
 
+    def returntocenter(self):
+        self.send("allinone090090000000000")
+
 def main():
-    arduino = Arduino()
+    global arduino
 
     last_saved_commit = None
 
@@ -100,8 +103,19 @@ def send_commands(commit, arduino):
         arduino.send(command)
 
 if __name__ == '__main__':
+    arduino = Arduino()
+
     try:
         main()
     except KeyboardInterrupt:
-        print "Aborted by user. Bye!"
+        print "Aborted by user. Resetting finger to center position..."
+        sleep(2)
+        arduino.returntocenter()
+        print "Bye!"
+        exit()
+    except:
+        print "Unexpected error! Resetting finger to center position..."
+        sleep(2)
+        arduino.returntocenter()
+        print "Bye!"
         exit()
