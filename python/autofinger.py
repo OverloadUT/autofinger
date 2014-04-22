@@ -3,7 +3,6 @@
 
 from time import sleep
 import serial
-from random import randint
 from bs4 import BeautifulSoup
 import urllib
 import sys
@@ -33,6 +32,8 @@ seats = {
 devs = {
     'OverloadUT': 'seat-1-1',
 }
+
+
 
 class Arduino:
     ser = None
@@ -90,7 +91,7 @@ def main():
                     # Datetime format example: Mon, 21 Apr 2014 23:39:17 +0000
                     # strptime doesn't work with the timezone number, so we strip it out below
                     commit['datetime'] = datetime.datetime.strptime(commit_soup_tag.find_next('pubdate').string[:-6], '%a, %d %b %Y %H:%M:%S')
-                    commit['author'] = commit_soup_tag.find_next('author').string
+                    commit['author'] = commit_soup_tag.find_next('author').string.split('<')[0].rstrip()
                     commit['project'] = repo[0]
                     commit['color'] = repo[1]
                     if newest_commit == None or commit['datetime'] > newest_commit['datetime']:
@@ -118,6 +119,7 @@ def send_commands(commit, arduino):
 
 if __name__ == '__main__':
     arduino = Arduino()
+
 
     try:
         main()
