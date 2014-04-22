@@ -5,6 +5,9 @@ from time import sleep
 import serial
 from random import randint
 from bs4 import BeautifulSoup
+import urllib
+import sys
+import datetime
 
 seats = {
     'seat-1-1': [30, 5],
@@ -24,16 +27,8 @@ seats = {
     'seat-6-4': [60, 171],
     'seat-6-5': [65, 177],
     'seat-6-6': [75, 180],
+    'unknown': [90, 160],
 }
-
-colors = [
-    "255000000",
-    "255255000",
-    "000255000",
-    "000255255",
-    "000000255",
-    "255000255",
-]
 
 devs = {
     'OverloadUT': 'seat-1-1',
@@ -41,6 +36,8 @@ devs = {
 
 class Arduino:
     ser = None
+    state = 'reset'
+
     def __init__(self):
         try:
             with open('arduino.conf', 'r') as f:
@@ -70,37 +67,54 @@ def main():
 
     last_saved_commit = None
 
-    while True:
-        #TODO: get latest commit
-        last_commit = None
+    repos = []
+    try:
+        with open('repos.conf', 'r') as f:
+            for line in f:
+                line = line.rstrip()
+                repos.append(line.split(','))
+    except:
+        print "Error reading repos.conf file."
+    else:
+        while True:
+            newest_commit = last_saved_commit
+            for repo in repos:
+                try:
+                    f = urllib.urlopen(repo[2])
+                    soup = BeautifulSoup(f.read())
+                except IOError:
+                    print "ERROR reaching server \"{}\". Will try again later.".format(repo[2])
+                else:
+                    commit = {}
+                    commit_soup_tag = soup.find('item')
+                    # Datetime format example: Mon, 21 Apr 2014 23:39:17 +0000
+                    # strptime doesn't work with the timezone number, so we strip it out below
+                    commit['datetime'] = datetime.datetime.strptime(commit_soup_tag.find_next('pubdate').string[:-6], '%a, %d %b %Y %H:%M:%S')
+                    commit['author'] = commit_soup_tag.find_next('author').string
+                    commit['project'] = repo[0]
+                    commit['color'] = repo[1]
+                    if newest_commit == None or commit['datetime'] > newest_commit['datetime']:
+                        newest_commit = commit
 
-        if last_commit != None and last_commit.sha != last_saved_commit:
-            last_saved_commit = last_commit.sha
-            # We have a new commit!
-            print "New commit by {}: {}".format(last_commit.author.login, last_saved_commit)
+            if newest_commit != None and (last_saved_commit == None or last_saved_commit['datetime'] < newest_commit['datetime']):
+                last_saved_commit = newest_commit
+                # We have a new commit!newest_commit
+                print "New commit by {}: {}".format(last_saved_commit['author'], last_saved_commit['datetime'])
+                send_commands(last_saved_commit, arduino)
+                print "Last commit was {} ago".format(datetime.datetime.utcnow() - last_saved_commit['datetime'])
 
-            send_commands(last_commit, ser)
-
-            # TODO: Send crap to arduino
-            #ser.write
-
-        sleep(5)
+            sleep(5)
 
 def send_commands(commit, arduino):
     seat_coords = [90,90]
     try:
-        seat_coords = seats[devs[commit.author.login]]
+        seat_coords = seats[devs[commit['author']]]
     except KeyError:
-        print "Unknown dev: {}".format(commit.author.login)
+        print "Unknown dev: {}".format(commit['author'])
 
-    color = [255,0,0]
-
-    commands = []
-    # Servo command
-    commands.append("movsrvos{0:03d}{1:03d}".format(seat_coords[0], seat_coords[1]).ljust(32))
-
-    for command in commands:
-        arduino.send(command)
+    color = commit['color']
+    command = "allinone{0:03d}{1:03d}{2:s}".format(seat_coords[0], seat_coords[1], color).ljust(32)
+    arduino.send(command)
 
 if __name__ == '__main__':
     arduino = Arduino()
@@ -114,4 +128,5 @@ if __name__ == '__main__':
         sleep(2)
         arduino.returntocenter()
         print "Bye!"
+        raise
         exit()
