@@ -41,12 +41,17 @@ devs = {
 
 class Arduino:
     ser = None
-    def __init__(self, port):
+    def __init__(self):
         try:
+            with open('arduino.conf', 'r') as f:
+                port = f.readline()
             self.ser = serial.Serial(port, 9600)
+        except IOError:
+            print "****  arduino.conf does not exist  ****"
+            print "**** Continuing in SIMULATION MODE ****"
         except OSError:
-            print "****   ERROR OPENING ARDUINO PORT   ****"
-            print "**** Continuing in SIMULATION MODE  ****"
+            print "****   ERROR OPENING ARDUINO PORT  ****"
+            print "**** Continuing in SIMULATION MODE ****"
 
     def send(self, command):
         print "Sending command to Arduino: \"{}\"".format(command)
@@ -57,7 +62,6 @@ class Arduino:
             self.ser.write(bytecommand)
 
 def main():
-    arduino = Arduino('/dev/ttyUSB0')
 
     seats_sorted = sorted(seats, key=lambda key: key)
 
@@ -70,6 +74,7 @@ def main():
             for command in commands:
                 arduino.send(command)
             sleep(1.2)
+    arduino = Arduino()
 
     last_saved_commit = None
 
