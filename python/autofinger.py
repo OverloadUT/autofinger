@@ -124,6 +124,8 @@ def main():
                     soup = BeautifulSoup(f.read())
                 except IOError:
                     print "ERROR reaching server \"{}\". Will try again later.".format(repo[2])
+                except:
+                    raise
                 else:
                     commit_soup_tags = soup.find_all('item')
                     # Datetime format example: Mon, 21 Apr 2014 23:39:17 +0000
