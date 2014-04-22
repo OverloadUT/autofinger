@@ -44,6 +44,8 @@ class Devs:
     def get_seat_name(self, dev):
         if dev in self.devseats and self.devseats[dev] in seats:
             return self.devseats[dev]
+        elif dev in self.devseats and self.devseats[dev] == 'ignore':
+            return 'ignore'
         else:
             return False
 
