@@ -26,14 +26,41 @@ seats = {
     'seat-6-4': [60, 171],
     'seat-6-5': [65, 177],
     'seat-6-6': [75, 180],
-    'unknown': [90, 160],
 }
 
-devs = {
-    'OverloadUT': 'seat-1-1',
-}
+class Devs:
+    devseats = {}
 
+    def __init__(self):
+        try:
+            with open('devs.conf', 'r') as f:
+                for line in f:
+                    dev = line.rstrip().split(',')
+                    self.devseats[dev[0]] = dev[1]
+                    print "Loaded dev {} in seat {}".format(dev[0], dev[1])
+        except:
+            print "Error reading devs.conf"
 
+    def get_seat_name(self, dev):
+        if dev in self.devseats and self.devseats[dev] in seats:
+            return self.devseats[dev]
+        else:
+            return False
+
+    def get_seat(self, dev):
+        if dev in self.devseats and self.devseats[dev] in seats and seats[self.devseats[dev]] != 'ignore':
+            return seats[self.devseats[dev]]
+        else:
+            return False
+
+    def is_defined(self, dev):
+        return (dev in self.devseats)
+
+    def has_seat(self, dev):
+        if self.is_defined(dev) and self.get_seat_name != 'ignore':
+            return True
+        else:
+            return False
 
 class Arduino:
     ser = None
@@ -60,11 +87,23 @@ class Arduino:
             bytecommand = list(bytearray(command))
             self.ser.write(bytecommand)
 
-    def returntocenter(self):
+    def force_reset(self):
         self.send("allinone090090000000000")
+        self.state = 'reset'
+
+    def reset(self):
+        if self.state != 'reset':
+            self.force_reset()
+
+    def point(self, seat, color):
+        if seat != False:
+            command = "allinone{0:03d}{1:03d}{2:s}".format(seat[0], seat[1], color).ljust(32)
+            self.send(command)
+            self.state = 'pointing'
 
 def main():
     global arduino
+    devs = Devs()
 
     last_saved_commit = None
 
@@ -86,36 +125,30 @@ def main():
                 except IOError:
                     print "ERROR reaching server \"{}\". Will try again later.".format(repo[2])
                 else:
-                    commit = {}
-                    commit_soup_tag = soup.find('item')
+                    commit_soup_tags = soup.find_all('item')
                     # Datetime format example: Mon, 21 Apr 2014 23:39:17 +0000
                     # strptime doesn't work with the timezone number, so we strip it out below
-                    commit['datetime'] = datetime.datetime.strptime(commit_soup_tag.find_next('pubdate').string[:-6], '%a, %d %b %Y %H:%M:%S')
-                    commit['author'] = commit_soup_tag.find_next('author').string.split('<')[0].rstrip()
-                    commit['project'] = repo[0]
-                    commit['color'] = repo[1]
-                    if newest_commit == None or commit['datetime'] > newest_commit['datetime']:
-                        newest_commit = commit
+                    for commit_soup_tag in commit_soup_tags:
+                        commit = {}
+                        commit['datetime'] = datetime.datetime.strptime(commit_soup_tag.find_next('pubdate').string[:-6], '%a, %d %b %Y %H:%M:%S')
+                        commit['author'] = commit_soup_tag.find_next('author').string.split('<')[0].rstrip()
+                        commit['project'] = repo[0]
+                        commit['color'] = repo[1]
+                        if devs.has_seat(commit['author']) and (newest_commit == None or commit['datetime'] > newest_commit['datetime']):
+                            newest_commit = commit
 
             if newest_commit != None and (last_saved_commit == None or last_saved_commit['datetime'] < newest_commit['datetime']):
                 last_saved_commit = newest_commit
                 # We have a new commit!newest_commit
                 print "New commit by {}: {}".format(last_saved_commit['author'], last_saved_commit['datetime'])
-                send_commands(last_saved_commit, arduino)
-                print "Last commit was {} ago".format(datetime.datetime.utcnow() - last_saved_commit['datetime'])
+                print "Commit was {} ago".format(datetime.datetime.utcnow() - last_saved_commit['datetime'])
+                # Only point if the commit was in the last hour
+                if (datetime.datetime.utcnow() - last_saved_commit['datetime']).seconds < 3600:
+                    arduino.point(devs.get_seat(last_saved_commit['author']), last_saved_commit['color'])
+                else:
+                    print "Commit was too old to point"
 
             sleep(5)
-
-def send_commands(commit, arduino):
-    seat_coords = [90,90]
-    try:
-        seat_coords = seats[devs[commit['author']]]
-    except KeyError:
-        print "Unknown dev: {}".format(commit['author'])
-
-    color = commit['color']
-    command = "allinone{0:03d}{1:03d}{2:s}".format(seat_coords[0], seat_coords[1], color).ljust(32)
-    arduino.send(command)
 
 if __name__ == '__main__':
     arduino = Arduino()
@@ -128,7 +161,7 @@ if __name__ == '__main__':
     finally:
         print "Resetting finger to center position..."
         sleep(2)
-        arduino.returntocenter()
+        arduino.force_reset()
         print "Bye!"
         raise
         exit()

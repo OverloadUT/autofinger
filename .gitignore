@@ -4,3 +4,5 @@ python/arduino.conf
 *.pyc
 
 python/repos.conf
+
+python/devs.conf
