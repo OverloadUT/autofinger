@@ -1,5 +1,4 @@
 from autofinger import seats
-from autofinger import colors
 from autofinger import Arduino
 from random import randint
 from time import sleep
