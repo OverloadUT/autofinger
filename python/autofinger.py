@@ -155,6 +155,9 @@ def main():
                 else:
                     print "Commit was too old to point"
 
+            if datetime.datetime.utcnow() - last_saved_commit['datetime'].seconds >= 3600:
+                arduino.reset()
+
             sleep(5)
 
 if __name__ == '__main__':
