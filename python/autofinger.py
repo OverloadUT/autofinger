@@ -142,7 +142,6 @@ def main():
                         commit['color'] = repo[1]
                         if devs.has_seat(commit['author']) and (newest_commit == None or commit['datetime'] > newest_commit['datetime']):
                             newest_commit = commit
-                sleep(1)
 
             if newest_commit != None and (last_saved_commit == None or last_saved_commit['datetime'] < newest_commit['datetime']):
                 last_saved_commit = newest_commit
@@ -155,7 +154,7 @@ def main():
                 else:
                     print "Commit was too old to point"
 
-            if datetime.datetime.utcnow() - last_saved_commit['datetime'].seconds >= 3600:
+            if (datetime.datetime.utcnow() - last_saved_commit['datetime']).seconds >= 3600:
                 arduino.reset()
 
             sleep(5)
